@@ -16,43 +16,39 @@
 
 package com.alibaba.otter.node.etl.extract.extractor;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import javax.sql.DataSource;
-
-import org.slf4j.MDC;
-import org.springframework.util.CollectionUtils;
-
-import com.alibaba.otter.node.etl.OtterConstants;
 import com.alibaba.otter.node.etl.common.datasource.DataSourceService;
 import com.alibaba.otter.node.etl.extract.exceptions.ExtractException;
 import com.alibaba.otter.shared.common.model.config.ConfigHelper;
-import com.alibaba.otter.shared.common.model.config.data.DataMedia;
 import com.alibaba.otter.shared.common.model.config.data.DataMediaPair;
 import com.alibaba.otter.shared.common.model.config.pipeline.Pipeline;
 import com.alibaba.otter.shared.common.utils.extension.ExtensionFactory;
 import com.alibaba.otter.shared.common.utils.thread.ExecutorTemplate;
 import com.alibaba.otter.shared.common.utils.thread.ExecutorTemplateGetter;
 import com.alibaba.otter.shared.etl.extend.processor.EventProcessor;
-import com.alibaba.otter.shared.etl.extend.processor.support.DataSourceFetcher;
-import com.alibaba.otter.shared.etl.extend.processor.support.DataSourceFetcherAware;
 import com.alibaba.otter.shared.etl.model.DbBatch;
 import com.alibaba.otter.shared.etl.model.EventData;
 import com.alibaba.otter.shared.etl.model.RowBatch;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.util.CollectionUtils;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * 调用{@linkplain EventProcessor}，进行业务数据处理
- * 
+ *
  * @author jianghang 2012-7-23 下午03:11:19
  */
 public class ProcessorExtractor extends AbstractExtractor<DbBatch> {
 
-    private ExtensionFactory       extensionFactory;
-    private DataSourceService      dataSourceService;
+    private ExtensionFactory extensionFactory;
+    private DataSourceService dataSourceService;
     private ExecutorTemplateGetter executorTemplateGetter;
+
+    protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public void extract(DbBatch param) throws ExtractException {
         ExecutorTemplate executorTemplate = null;
@@ -67,49 +63,50 @@ public class ProcessorExtractor extends AbstractExtractor<DbBatch> {
             executorTemplate.adjustPoolSize(pipeline.getParameters().getExtractPoolSize());
             for (final EventData eventData : eventDatas) {
                 List<DataMediaPair> dataMediaPairs = ConfigHelper.findDataMediaPairByMediaId(pipeline,
-                    eventData.getTableId());
+                        eventData.getTableId());
                 if (dataMediaPairs == null) {
                     throw new ExtractException("ERROR ## the dataMediaId = " + eventData.getTableId()
-                                               + " dataMediaPair is null,please check");
+                            + " dataMediaPair is null,please check");
                 }
-
-                for (DataMediaPair dataMediaPair : dataMediaPairs) {
-                    if (!dataMediaPair.isExistFilter()) {
-                        continue;
-                    }
-
-                    final EventProcessor eventProcessor = extensionFactory.getExtension(EventProcessor.class,
-                        dataMediaPair.getFilterData());
-                    if (eventProcessor instanceof DataSourceFetcherAware) {
-                        ((DataSourceFetcherAware) eventProcessor).setDataSourceFetcher(new DataSourceFetcher() {
-
-                            @Override
-                            public DataSource fetch(Long tableId) {
-                                DataMedia dataMedia = ConfigHelper.findDataMedia(pipeline, tableId);
-                                return dataSourceService.getDataSource(pipeline.getId(), dataMedia.getSource());
-                            }
-                        });
-
-                        executorTemplate.submit(new Runnable() {
-
-                            @Override
-                            public void run() {
-                                MDC.put(OtterConstants.splitPipelineLogFileKey, String.valueOf(pipeline.getId()));
-                                boolean process = eventProcessor.process(eventData);
-                                if (!process) {
-                                    removeDatas.add(eventData);// 添加到删除记录中
-                                }
-                            }
-                        });
-                    } else {
-                        boolean process = eventProcessor.process(eventData);
-                        if (!process) {
-                            removeDatas.add(eventData);// 添加到删除记录中
-                            break;
-                        }
-                    }
-
-                }
+                // 注释掉  移到transformer里面处理
+//                for (DataMediaPair dataMediaPair : dataMediaPairs) {
+//                    if (!dataMediaPair.isExistFilter()) {
+//                        continue;
+//                    }
+//
+//                    final EventProcessor eventProcessor = extensionFactory.getExtension(EventProcessor.class,
+//                        dataMediaPair.getFilterData());
+//                    if (eventProcessor instanceof DataSourceFetcherAware) {
+//                        ((DataSourceFetcherAware) eventProcessor).setDataSourceFetcher(new DataSourceFetcher() {
+//
+//                            @Override
+//                            public DataSource fetch(Long tableId) {
+//                                DataMedia dataMedia = ConfigHelper.findDataMedia(pipeline, tableId);
+//                                return dataSourceService.getDataSource(pipeline.getId(), dataMedia.getSource());
+//                            }
+//                        });
+//
+//                        executorTemplate.submit(new Runnable() {
+//
+//                            @Override
+//                            public void run() {
+//                                MDC.put(OtterConstants.splitPipelineLogFileKey, String.valueOf(pipeline.getId()));
+//                                boolean process = eventProcessor.process(eventData);
+//                                if (!process) {
+////                                    dataMediaPair.setProcessResult(process);
+//                                    removeDatas.add(eventData);// 添加到删除记录中
+//                                }
+//                            }
+//                        });
+//                    } else {
+//                        boolean process = eventProcessor.process(eventData);
+//                        if (!process) {
+//                            removeDatas.add(eventData);// 添加到删除记录中
+//                            break;
+//                        }
+//                    }
+//
+//                }
 
             }
 

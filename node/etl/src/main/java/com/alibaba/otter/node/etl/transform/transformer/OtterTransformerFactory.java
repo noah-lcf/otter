@@ -16,39 +16,44 @@
 
 package com.alibaba.otter.node.etl.transform.transformer;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.alibaba.otter.node.common.config.ConfigClientService;
+import com.alibaba.otter.node.etl.OtterConstants;
+import com.alibaba.otter.node.etl.common.datasource.DataSourceService;
 import com.alibaba.otter.node.etl.transform.exception.TransformException;
 import com.alibaba.otter.shared.common.model.config.ConfigHelper;
 import com.alibaba.otter.shared.common.model.config.data.DataMedia;
 import com.alibaba.otter.shared.common.model.config.data.DataMediaPair;
 import com.alibaba.otter.shared.common.model.config.data.db.DbDataMedia;
 import com.alibaba.otter.shared.common.model.config.pipeline.Pipeline;
-import com.alibaba.otter.shared.etl.model.BatchObject;
-import com.alibaba.otter.shared.etl.model.EventData;
-import com.alibaba.otter.shared.etl.model.FileBatch;
-import com.alibaba.otter.shared.etl.model.FileData;
-import com.alibaba.otter.shared.etl.model.Identity;
-import com.alibaba.otter.shared.etl.model.RowBatch;
+import com.alibaba.otter.shared.common.utils.extension.ExtensionFactory;
+import com.alibaba.otter.shared.etl.extend.processor.EventProcessor;
+import com.alibaba.otter.shared.etl.extend.processor.support.DataSourceFetcher;
+import com.alibaba.otter.shared.etl.extend.processor.support.DataSourceFetcherAware;
+import com.alibaba.otter.shared.etl.model.*;
+import org.slf4j.MDC;
+
+import javax.sql.DataSource;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 数据对象转化工厂
- * 
+ *
  * @author jianghang 2011-10-27 下午06:29:02
  * @version 4.0.0
  */
 public class OtterTransformerFactory {
 
     private ConfigClientService configClientService;
-    private RowDataTransformer  rowDataTransformer;
+    private RowDataTransformer rowDataTransformer;
     private FileDataTransformer fileDataTransformer;
+    private ExtensionFactory extensionFactory;
+    private DataSourceService dataSourceService;
 
     /**
      * 将一种源数据进行转化，最后得到的结果会根据DataMediaPair中定义的目标对象生成不同的数据对象 <br/>
-     * 
+     * <p>
      * <pre>
      * 返回对象格式：Map
      * key : Class对象，代表生成的目标数据对象
@@ -64,7 +69,7 @@ public class OtterTransformerFactory {
         for (EventData eventData : rowBatch.getDatas()) {
             // 处理eventData
             Long tableId = eventData.getTableId();
-            Pipeline pipeline = configClientService.findPipeline(identity.getPipelineId());
+            final Pipeline pipeline = configClientService.findPipeline(identity.getPipelineId());
             // 针对每个同步数据，可能会存在多路复制的情况
             List<DataMediaPair> dataMediaPairs = ConfigHelper.findDataMediaPairByMediaId(pipeline, tableId);
             for (DataMediaPair pair : dataMediaPairs) {
@@ -72,9 +77,36 @@ public class OtterTransformerFactory {
                     continue;
                 }
 
+                //add by noah  从com.alibaba.otter.node.etl.extract.extractor.ProcessorExtractor 改放在这里进行过滤 解决一个table id对应多个pair时全部过滤的问题
+                if (pair.isExistFilter()) {
+                    final EventProcessor eventProcessor = extensionFactory.getExtension(EventProcessor.class,
+                            pair.getFilterData());
+                    if (eventProcessor instanceof DataSourceFetcherAware) {
+                        ((DataSourceFetcherAware) eventProcessor).setDataSourceFetcher(new DataSourceFetcher() {
+
+                            @Override
+                            public DataSource fetch(Long tableId) {
+                                DataMedia dataMedia = ConfigHelper.findDataMedia(pipeline, tableId);
+                                return dataSourceService.getDataSource(pipeline.getId(), dataMedia.getSource());
+                            }
+                        });
+
+                        MDC.put(OtterConstants.splitPipelineLogFileKey, String.valueOf(pipeline.getId()));
+                        boolean process = eventProcessor.process(eventData);
+                        if (!process) {
+                            continue;
+                        }
+                    } else {
+                        boolean process = eventProcessor.process(eventData);
+                        if (!process) {
+                            continue;
+                        }
+                    }
+                }
                 OtterTransformer translate = lookup(pair.getSource(), pair.getTarget());
                 // 进行转化
                 Object item = translate.transform(eventData, new OtterTransformerContext(identity, pair, pipeline));
+
                 if (item == null) {
                     continue;
                 }
@@ -85,6 +117,11 @@ public class OtterTransformerFactory {
         }
 
         return result;
+    }
+
+
+    protected Pipeline getPipeline(Long pipelineId) {
+        return configClientService.findPipeline(pipelineId);
     }
 
     /**
@@ -109,7 +146,7 @@ public class OtterTransformerFactory {
                 }
 
                 Object item = fileDataTransformer.transform(fileData, new OtterTransformerContext(identity, pair,
-                                                                                                  pipeline));
+                        pipeline));
                 if (item == null) {
                     continue;
                 }
@@ -167,7 +204,7 @@ public class OtterTransformerFactory {
         }
 
         throw new TransformException("no support translate for source " + sourceDataMedia.toString() + " to target "
-                                     + targetDataMedia);
+                + targetDataMedia);
     }
 
     private Identity translateIdentity(Identity identity) {
@@ -190,6 +227,14 @@ public class OtterTransformerFactory {
 
     public void setFileDataTransformer(FileDataTransformer fileDataTransformer) {
         this.fileDataTransformer = fileDataTransformer;
+    }
+
+    public void setDataSourceService(DataSourceService dataSourceService) {
+        this.dataSourceService = dataSourceService;
+    }
+
+    public void setExtensionFactory(ExtensionFactory extensionFactory) {
+        this.extensionFactory = extensionFactory;
     }
 
 }

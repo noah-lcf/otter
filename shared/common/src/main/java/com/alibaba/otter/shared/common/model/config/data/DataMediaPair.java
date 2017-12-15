@@ -16,14 +16,13 @@
 
 package com.alibaba.otter.shared.common.model.config.data;
 
+import com.alibaba.otter.shared.common.utils.OtterToStringStyle;
+import org.apache.commons.lang.builder.ToStringBuilder;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-
-import org.apache.commons.lang.builder.ToStringBuilder;
-
-import com.alibaba.otter.shared.common.utils.OtterToStringStyle;
 
 /**
  * 介质A -> 介质B 的同步映射关系对
@@ -46,6 +45,7 @@ public class DataMediaPair implements Serializable {
     private List<ColumnGroup> columnGroups     = new ArrayList<ColumnGroup>();
     private Date              gmtCreate;
     private Date              gmtModified;
+    private Boolean processResult;
 
     public Long getId() {
         return id;
@@ -163,4 +163,11 @@ public class DataMediaPair implements Serializable {
         return ToStringBuilder.reflectionToString(this, OtterToStringStyle.DEFAULT_STYLE);
     }
 
+    public Boolean getProcessResult() {
+        return processResult;
+    }
+
+    public void setProcessResult(Boolean processResult) {
+        this.processResult = processResult;
+    }
 }

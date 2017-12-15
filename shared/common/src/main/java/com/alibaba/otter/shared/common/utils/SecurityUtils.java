@@ -31,6 +31,12 @@ public class SecurityUtils {
      * MD5 加密
      */
     public static String getMD5Str(String str) {
+
+
+
+
+
+
         MessageDigest messageDigest = null;
 
         try {
