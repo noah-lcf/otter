@@ -16,6 +16,7 @@
 
 package com.alibaba.otter.node.etl.transform.transformer;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.otter.node.common.config.ConfigClientService;
 import com.alibaba.otter.node.etl.OtterConstants;
 import com.alibaba.otter.node.etl.common.datasource.DataSourceService;
@@ -23,13 +24,16 @@ import com.alibaba.otter.node.etl.transform.exception.TransformException;
 import com.alibaba.otter.shared.common.model.config.ConfigHelper;
 import com.alibaba.otter.shared.common.model.config.data.DataMedia;
 import com.alibaba.otter.shared.common.model.config.data.DataMediaPair;
+import com.alibaba.otter.shared.common.model.config.data.TableRegex;
 import com.alibaba.otter.shared.common.model.config.data.db.DbDataMedia;
 import com.alibaba.otter.shared.common.model.config.pipeline.Pipeline;
+import com.alibaba.otter.shared.common.utils.RegexUtils;
 import com.alibaba.otter.shared.common.utils.extension.ExtensionFactory;
 import com.alibaba.otter.shared.etl.extend.processor.EventProcessor;
 import com.alibaba.otter.shared.etl.extend.processor.support.DataSourceFetcher;
 import com.alibaba.otter.shared.etl.extend.processor.support.DataSourceFetcherAware;
 import com.alibaba.otter.shared.etl.model.*;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.MDC;
 
 import javax.sql.DataSource;
@@ -75,6 +79,33 @@ public class OtterTransformerFactory {
             for (DataMediaPair pair : dataMediaPairs) {
                 if (!pair.getSource().getId().equals(tableId)) { // 过滤tableID不为源的同步
                     continue;
+                }
+
+                //add by noah 使用设置的pair正则匹配
+                if (StringUtils.isNotBlank(pair.getFieldMatchRegex())) {
+                    List<TableRegex> regexList = JSON.parseArray(pair.getFieldMatchRegex(), TableRegex.class);
+                    boolean allMatch = true;
+                    for (TableRegex tableRegex : regexList) {
+                        if (!allMatch) {
+                            break;
+                        }
+                        if (tableRegex.getTableName() != null && tableRegex.getTableName().equals(eventData.getTableName())) {
+                            Map<String, String> rules = tableRegex.getColumnRules();
+                            for (EventColumn column : eventData.getColumns()) {
+                                String columnRule = rules.get(column.getColumnName());
+                                if (columnRule != null) {
+                                    boolean match = StringUtils.isNotBlank(RegexUtils.findFirst(column.getColumnValue(), columnRule));
+                                    if (!match) {
+                                        allMatch = false;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (!allMatch) {
+                        continue;
+                    }
                 }
 
                 //add by noah  从com.alibaba.otter.node.etl.extract.extractor.ProcessorExtractor 改放在这里进行过滤 解决一个table id对应多个pair时全部过滤的问题
@@ -237,4 +268,8 @@ public class OtterTransformerFactory {
         this.extensionFactory = extensionFactory;
     }
 
+
+    public static void main(String[] args) {
+        List<TableRegex> tableRegexes = JSON.parseArray("[{\"tableName\":\"t1\",\"columnRules\":[{\"name\":\"a|b|c\"}]},{\"tableName\":\"t2\",\"columnRules\":[{\"name\":\"e|f|g\"}]}]", TableRegex.class);
+    }
 }

@@ -98,6 +98,7 @@ public class DataMediaPairAction {
         dataMediaPair.setSource(sourceDataMedia);
         targetDataMedia.setId(dataMediaPairInfo.getField("targetDataMediaId").getLongValue());
         dataMediaPair.setTarget(targetDataMedia);
+        dataMediaPair.setFieldMatchRegex(dataMediaPairInfo.getField("fieldMatchRegex").getStringValue());
         Long id = 0L;
         try {
             id = dataMediaPairService.createAndReturnId(dataMediaPair);

@@ -57,6 +57,10 @@ $control.setTemplate("home:navigation.vm")
 		</div>
 	</td>
   </tr>
+     <tr>
+         <th>FieldMatchRegex文本:</th>
+         <td>$!dataMediaPair.fieldMatchRegex</td>
+     </tr>
   <th>File Resolver：</th>
 	<td>
 		#if(!$stringUtil.isEmpty($!dataMediaPair.resolverData.clazzPath))

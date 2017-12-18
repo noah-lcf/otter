@@ -16,10 +16,10 @@
 
 package com.alibaba.otter.manager.biz.config.datamediapair.dal.dataobject;
 
+import com.alibaba.otter.shared.common.model.config.data.ColumnPairMode;
+
 import java.io.Serializable;
 import java.util.Date;
-
-import com.alibaba.otter.shared.common.model.config.data.ColumnPairMode;
 
 /**
  * @author simon
@@ -38,6 +38,7 @@ public class DataMediaPairDO implements Serializable {
     private Long              pipelineId;                              // 同步任务id
     private Date              gmtCreate;
     private Date              gmtModified;
+    private String fieldMatchRegex;
 
     public Long getId() {
         return id;
@@ -127,4 +128,11 @@ public class DataMediaPairDO implements Serializable {
         this.columnPairMode = columnPairMode;
     }
 
+    public String getFieldMatchRegex() {
+        return fieldMatchRegex;
+    }
+
+    public void setFieldMatchRegex(String fieldMatchRegex) {
+        this.fieldMatchRegex = fieldMatchRegex;
+    }
 }

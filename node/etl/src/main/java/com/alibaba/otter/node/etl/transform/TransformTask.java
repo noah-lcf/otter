@@ -16,11 +16,6 @@
 
 package com.alibaba.otter.node.etl.transform;
 
-import java.util.List;
-import java.util.Map;
-
-import org.slf4j.MDC;
-
 import com.alibaba.otter.node.etl.OtterConstants;
 import com.alibaba.otter.node.etl.common.jmx.StageAggregation.AggregationItem;
 import com.alibaba.otter.node.etl.common.pipe.PipeKey;
@@ -29,12 +24,11 @@ import com.alibaba.otter.node.etl.extract.SetlFuture;
 import com.alibaba.otter.node.etl.transform.transformer.OtterTransformerFactory;
 import com.alibaba.otter.shared.arbitrate.model.EtlEventData;
 import com.alibaba.otter.shared.common.model.config.enums.StageType;
-import com.alibaba.otter.shared.etl.model.BatchObject;
-import com.alibaba.otter.shared.etl.model.DbBatch;
-import com.alibaba.otter.shared.etl.model.EventData;
-import com.alibaba.otter.shared.etl.model.FileBatch;
-import com.alibaba.otter.shared.etl.model.FileData;
-import com.alibaba.otter.shared.etl.model.RowBatch;
+import com.alibaba.otter.shared.etl.model.*;
+import org.slf4j.MDC;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * transform工作线程,负责桥接连接仲裁器,Config,translate
@@ -142,4 +136,6 @@ public class TransformTask extends GlobalTask {
     public void setOtterTransformerFactory(OtterTransformerFactory otterTransformerFactory) {
         this.otterTransformerFactory = otterTransformerFactory;
     }
+
+
 }

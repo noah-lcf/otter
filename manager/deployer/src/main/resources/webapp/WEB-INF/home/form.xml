@@ -356,6 +356,7 @@
 			<field name="filterText" displayName="processor文本" />
 			<field name="resolverType" displayName="resolver类型" />
 			<field name="resolverText" displayName="resolver文本" />
+			<field name="fieldMatchRegex" displayName="字段正则匹配文本" />
 			<field name="filter" displayName="过滤器类" />
 			<field name="sourceDataMediaName"
 				displayName="源数据表名称" />

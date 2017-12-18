@@ -88,6 +88,10 @@ function changeKeyword(id, name, local) {
         <th>EventProcessor文本:</th>
             <td><textarea cols="90" rows="10" name="$dataMediaPairGroup.filterText.key">$!dataMediaPairGroup.filterText.value</textarea></td>
       </tr>
+        <tr>
+            <th>FieldMatchRegex文本:</th>
+            <td><textarea cols="90" rows="10" name="$dataMediaPairGroup.fieldMatchRegex.key">$!dataMediaPairGroup.fieldMatchRegex.value</textarea></td>
+        </tr>
 	  <tr>
         <th>FileResolver类型:</th>
 		<td>

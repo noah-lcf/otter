@@ -16,16 +16,6 @@
 
 package com.alibaba.otter.manager.biz.config.datamediapair.impl;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-
-import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.alibaba.otter.shared.common.utils.Assert;
 import com.alibaba.otter.manager.biz.common.exceptions.ManagerException;
 import com.alibaba.otter.manager.biz.common.exceptions.RepeatConfigureException;
 import com.alibaba.otter.manager.biz.config.datacolumnpair.DataColumnPairGroupService;
@@ -34,25 +24,30 @@ import com.alibaba.otter.manager.biz.config.datamedia.DataMediaService;
 import com.alibaba.otter.manager.biz.config.datamediapair.DataMediaPairService;
 import com.alibaba.otter.manager.biz.config.datamediapair.dal.DataMediaPairDAO;
 import com.alibaba.otter.manager.biz.config.datamediapair.dal.dataobject.DataMediaPairDO;
-import com.alibaba.otter.shared.common.model.config.data.ColumnGroup;
-import com.alibaba.otter.shared.common.model.config.data.ColumnPair;
-import com.alibaba.otter.shared.common.model.config.data.DataMedia;
-import com.alibaba.otter.shared.common.model.config.data.DataMediaPair;
-import com.alibaba.otter.shared.common.model.config.data.ExtensionData;
+import com.alibaba.otter.shared.common.model.config.data.*;
+import com.alibaba.otter.shared.common.utils.Assert;
 import com.alibaba.otter.shared.common.utils.JsonUtils;
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author simon
  */
 public class DataMediaPairServiceImpl implements DataMediaPairService {
 
-    private static final Logger        logger = LoggerFactory.getLogger(DataMediaPairServiceImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(DataMediaPairServiceImpl.class);
 
-    private DataMediaPairDAO           dataMediaPairDao;
+    private DataMediaPairDAO dataMediaPairDao;
 
-    private DataMediaService           dataMediaService;
+    private DataMediaService dataMediaService;
 
-    private DataColumnPairService      dataColumnPairService;
+    private DataColumnPairService dataColumnPairService;
 
     private DataColumnPairGroupService dataColumnPairGroupService;
 
@@ -163,7 +158,7 @@ public class DataMediaPairServiceImpl implements DataMediaPairService {
                 dataMediaPairDos = dataMediaPairDao.listByMultiId(identities);
                 if (dataMediaPairDos.isEmpty()) {
                     String exceptionCause = "couldn't query any dataMediaPair by dataMediaPairIds:"
-                                            + Arrays.toString(identities);
+                            + Arrays.toString(identities);
                     logger.error("ERROR ## " + exceptionCause);
                     throw new ManagerException(exceptionCause);
                 }
@@ -193,7 +188,7 @@ public class DataMediaPairServiceImpl implements DataMediaPairService {
             List<DataMediaPairDO> dataMediaPairDos = dataMediaPairDao.listByCondition(condition);
             if (dataMediaPairDos.isEmpty()) {
                 logger.debug("DEBUG ## couldn't query any DataMediaPairs by the condition:"
-                             + JsonUtils.marshalToString(condition));
+                        + JsonUtils.marshalToString(condition));
                 return dataMediaPairs;
             }
             dataMediaPairs = doToModel(dataMediaPairDos);
@@ -212,7 +207,7 @@ public class DataMediaPairServiceImpl implements DataMediaPairService {
         List<DataMediaPair> dataMediaPairs = listByIds(dataMediaPairId);
         if (dataMediaPairs.size() != 1) {
             String exceptionCause = "query dataMediaPairId:" + dataMediaPairId + " but return " + dataMediaPairs.size()
-                                    + " Pairs.";
+                    + " Pairs.";
             logger.error("ERROR ## " + exceptionCause);
             throw new ManagerException(exceptionCause);
         }
@@ -298,22 +293,23 @@ public class DataMediaPairServiceImpl implements DataMediaPairService {
             dataMediaPair.setPushWeight(dataMediaPairDo.getPushWeight());
             if (StringUtils.isNotBlank(dataMediaPairDo.getFilter())) {
                 dataMediaPair.setFilterData(JsonUtils.unmarshalFromString(dataMediaPairDo.getFilter(),
-                                                                          ExtensionData.class));
+                        ExtensionData.class));
             }
 
             if (StringUtils.isNotBlank(dataMediaPairDo.getResolver())) {
                 dataMediaPair.setResolverData(JsonUtils.unmarshalFromString(dataMediaPairDo.getResolver(),
-                                                                            ExtensionData.class));
+                        ExtensionData.class));
             }
             dataMediaPair.setColumnPairs(columnPairs);
             dataMediaPair.setColumnGroups(columnGroups);
             dataMediaPair.setColumnPairMode(dataMediaPairDo.getColumnPairMode());
             dataMediaPair.setGmtCreate(dataMediaPairDo.getGmtCreate());
             dataMediaPair.setGmtModified(dataMediaPairDo.getGmtModified());
+            dataMediaPair.setFieldMatchRegex(dataMediaPairDo.getFieldMatchRegex());
 
             // 组装DataMedia
             List<DataMedia> dataMedias = dataMediaService.listByIds(dataMediaPairDo.getSourceDataMediaId(),
-                                                                    dataMediaPairDo.getTargetDataMediaId());
+                    dataMediaPairDo.getTargetDataMediaId());
             if (null == dataMedias || dataMedias.size() != 2) {
                 // 抛出异常
                 return dataMediaPair;
@@ -362,7 +358,7 @@ public class DataMediaPairServiceImpl implements DataMediaPairService {
 
     /**
      * 用于Model对象转化为DO对象
-     * 
+     *
      * @param dataMediaPair
      * @return DataMediaPairDO
      */
@@ -380,6 +376,7 @@ public class DataMediaPairServiceImpl implements DataMediaPairService {
             dataMediaPairDo.setColumnPairMode(dataMediaPair.getColumnPairMode());
             dataMediaPairDo.setGmtCreate(dataMediaPair.getGmtCreate());
             dataMediaPairDo.setGmtModified(dataMediaPair.getGmtModified());
+            dataMediaPairDo.setFieldMatchRegex(dataMediaPair.getFieldMatchRegex());
         } catch (Exception e) {
             logger.error("ERROR ## change the dataMediaPair Model to Do has an exception", e);
             throw new ManagerException(e);

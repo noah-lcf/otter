@@ -46,6 +46,7 @@ public class DataMediaPair implements Serializable {
     private Date              gmtCreate;
     private Date              gmtModified;
     private Boolean processResult;
+    private String fieldMatchRegex;
 
     public Long getId() {
         return id;
@@ -169,5 +170,13 @@ public class DataMediaPair implements Serializable {
 
     public void setProcessResult(Boolean processResult) {
         this.processResult = processResult;
+    }
+
+    public String getFieldMatchRegex() {
+        return fieldMatchRegex;
+    }
+
+    public void setFieldMatchRegex(String fieldMatchRegex) {
+        this.fieldMatchRegex = fieldMatchRegex;
     }
 }

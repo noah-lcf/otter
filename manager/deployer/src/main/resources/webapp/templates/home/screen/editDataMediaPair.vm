@@ -89,6 +89,10 @@ function changeKeyword(id, name, local) {
         <th>EventProcessor文本:</th>
 		<td><textarea cols="90" rows="10" name="$dataMediaPairGroup.filterText.key">#if ($dataMediaPair.filterData.ExtensionDataType.isClazz())$!dataMediaPair.filterData.clazzPath#elseif($dataMediaPair.filterData.ExtensionDataType.isSource())$!dataMediaPair.filterData.sourceText#end</textarea><span class="red">*</span></td>
       </tr>
+        <tr>
+            <th>FieldMatchRegex文本:</th>
+            <td><textarea cols="90" rows="10" name="$dataMediaPairGroup.fieldMatchRegex.key">$!dataMediaPair.fieldMatchRegex</textarea></td>
+        </tr>
 	  <tr>
         <th>FileResolver类型:</th>
 		<td>
